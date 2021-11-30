@@ -1,6 +1,8 @@
 import org.hibernate.Session;
 import org.hibernate.Transaction;
 
+import javax.persistence.LockModeType;
+
 public class SimulateHibernateOptimisticLocking {
     public static void main(String[] args) {
         Long perosnId = 1L;
@@ -44,5 +46,20 @@ public class SimulateHibernateOptimisticLocking {
 
         t1.start();
         t2.start();
+
+        //Pessimistic Locking
+        Session session3 = HibernateUtil.getSessionFactory().openSession();
+        Transaction tx1 = null;
+        Person person = session3.get(Person.class, perosnId);
+        if (person != null) {
+            tx1 = session3.beginTransaction();
+            //Acquire lock so that other transaction wont update
+            session3.lock(person, LockModeType.PESSIMISTIC_WRITE);
+            //performing task to update the password
+            person.setPassword("pass#234");
+            session3.update(person);
+            //Commit the transaction
+            tx1.commit();
+        }
     }
 }
